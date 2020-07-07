@@ -16,3 +16,8 @@ The procedure works for MM32W051PFB(q3)
 
 1.Schematic diagram of adding Bluetooth Demo board.
 
+### 2020.07.07
+
+1.	Add FT value
+
+2.	change SV3.5.9 --> SV3.6.0

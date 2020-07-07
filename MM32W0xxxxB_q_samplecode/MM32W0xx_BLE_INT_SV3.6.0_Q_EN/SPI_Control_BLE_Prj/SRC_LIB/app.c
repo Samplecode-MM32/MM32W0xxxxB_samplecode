@@ -50,7 +50,7 @@ extern u32 BaudRate;
 #define UUID16_FORMAT  0xff
 
 
-#define SOFTWARE_INFO "SV3.5.9"
+#define SOFTWARE_INFO "SV3.6.0"
 #define MANU_INFO     "MINDMOTION Bluetooth"
 #define MAX_NAME_LEN  24
 char DeviceInfo[MAX_NAME_LEN] = "MINDMOTION";

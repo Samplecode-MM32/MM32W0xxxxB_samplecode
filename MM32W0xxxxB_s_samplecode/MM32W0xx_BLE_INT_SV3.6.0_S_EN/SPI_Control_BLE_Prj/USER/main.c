@@ -25,6 +25,8 @@ int main(void)
 {
   unsigned long temp = 0x800000;
   unsigned long i = 0;
+	unsigned char *ft_val = (unsigned char *)(0x1FFFF804);
+	unsigned char ft_value[2] = {0xc0, 0x12};
   while (temp--);
   SystemClk_HSEInit();
   SleepStop = 0x01;
@@ -52,13 +54,12 @@ int main(void)
   while (SysTick_Count < 5) {}; //delay at least 5ms between radio_initBle() and ble_run...
   printf("\r\nMAC:%02x-%02x-%02x-%02x-%02x-%02x\r\n", ble_mac_addr[5], ble_mac_addr[4], ble_mac_addr[3], ble_mac_addr[2], ble_mac_addr[1], ble_mac_addr[0]);
 
-  value_t[0] = 0xc0;
-  value_t[1] = *(u8 *)0x1FFFF820; //Read FT value(FT value:The RF module is calibrated at the factory to prevent frequency deviation. The user can call the FT value in the program)
-  printf("\r\nREG FT Value:%x %x\r\n", value_t[0], value_t[1]);////Serial printing to determine whether the value of FT is included here
-
-//  mg_activate(0x53);//If FT values are true£¬please open here
-//  mg_writeBuf(0x4, value_t, 2); //write FT values
-//  mg_activate(0x56);
+	if((*ft_val > 11) && (*ft_val < 27)){
+			ft_value[1] = *ft_val;
+			mg_activate(0x53);
+			mg_writeBuf(0x4, ft_value, 2);
+			mg_activate(0x56);
+	}
 
   ble_run_interrupt_start(160 * 2); //320*0.625=200 ms
   while (1)

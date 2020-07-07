@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2015 MindMotion Electronics Co., Ltd.
+    Copyright (c) 2015 Macrogiga Electronics Co., Ltd.
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -21,34 +21,28 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
     DEALINGS IN THE SOFTWARE.
 */
+
 #ifndef BLE_PAIR_SUPPORT //default cfg
+
 #include <string.h>
 #include "app.h"
 #include "HAL_conf.h"
 #include "mg_api.h"
-//#include "usb.h"
-#include "sys.h"
-
-#define MAX_SIZE 100
-#define NOTIFYSIZE  20
-#define keyNums 10
-#define keychar 26
-
-typedef unsigned long int   uint32;
-typedef unsigned short int  uint16;
-typedef unsigned char     uint8;
-typedef signed long int   int32;
-typedef signed short int  int16;
-typedef signed char     int8;
+#include <stdio.h>
 
 extern u32 BaudRate;
 extern u8 txBuf[], rxBuf[], txLen, PosW;
 extern u16 RxCont;
-extern unsigned char SleepStop;
-extern void moduleOutData(u8 *data, u8 len);
-extern uint8 numASCLLConvertHIDKeyBoard[keyNums][2];
-extern uint8 charASCLLConvertHIDKeyBoard[keychar][3];
+u16 NotifyCont = 0;
+u8 CanNotifyFlag = 0;
+char data_name[24] = {0};
 
+extern unsigned char SleepStop;
+unsigned char pld_adv[  ] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+unsigned char len_adv = 10; //max 20
+#define MAX_SIZE 100
+#define NOTIFYSIZE  20
+extern void moduleOutData(u8 *data, u8 len);
 void ChangeBaudRate(void);
 
 #define ATT_CHAR_PROP_RD                            0x02
@@ -64,15 +58,12 @@ void ChangeBaudRate(void);
 #define TYPE_xRpRef    0x2907
 #define TYPE_RpRef     0x2908
 #define TYPE_INC       0x2802
-
 #define UUID16_FORMAT  0xff
-#define SOFTWARE_INFO "3.5.9"
+int CHANGE_DEVINCEINFO = 0;
+#define SOFTWARE_INFO "SV3.6.0"
 #define MANU_INFO     "MindMotion Bluetooth"
-
 char DeviceInfo[24] =  "MindMotion";  /*max len is 24 bytes*/
-u16 NotifyCont = 0;
-u8 CanNotifyFlag = 0;
-u8 txBufFromBLEtoUSB[8] = {0};
+
 u16 cur_notifyhandle = 0x12;  //Note: make sure each notify handle by invoking function: set_notifyhandle(hd);
 
 /********************************************************************************************************
@@ -122,6 +113,7 @@ void updateDeviceInfoData(u8 *name, u8 len)
   17:18  6E400004-B5A3-F393-E0A9-E50E24DCCA9E(0x0A)  BaudRate
   19     0x2901  info
 ************************************************************************************/
+
 typedef struct ble_character16
 {
   u16 type16;          //type2
@@ -198,6 +190,7 @@ u8 GetCharListDim(void)
 void att_server_rdByGrType(u8 pdu_type, u8 attOpcode, u16 st_hd, u16 end_hd, u16 att_type)
 {
 //!!!!!!!!  hard code for gap and gatt, make sure here is 100% matched with database:[AttCharList] !!!!!!!!!
+
   if ((att_type == GATT_PRIMARY_SERVICE_UUID) && (st_hd == 1)) //hard code for device info service
   {
     att_server_rdByGrTypeRspDeviceInfo(pdu_type);//using the default device info service
@@ -221,10 +214,6 @@ void att_server_rdByGrType(u8 pdu_type, u8 attOpcode, u16 st_hd, u16 end_hd, u16
   att_notFd(pdu_type, attOpcode, st_hd);
 }
 
-u8 BLE_DATA = 0;
-
-///STEP2:data coming
-///write response, data coming....
 /********************************************************************************************************
 **function: ser_write_rsp
 **@brief    This function is the reply function after the BLE device receives the write request
@@ -244,7 +233,6 @@ u8 BLE_DATA = 0;
 void ser_write_rsp(u8 pdu_type/*reserved*/, u8 attOpcode/*reserved*/,
                    u16 att_hd, u8 *attValue/*app data pointer*/, u8 valueLen_w/*app data size*/)
 {
-  u8 i, j, k;
   switch (att_hd)
   {
   case 0x18://BaudRate
@@ -253,7 +241,6 @@ void ser_write_rsp(u8 pdu_type/*reserved*/, u8 attOpcode/*reserved*/,
     ChangeBaudRate();
     break;
   case 0x15://Tx
-
 #ifdef USE_UART
 #ifdef USE_AT_CMD
     moduleOutData("IND:DATA", 8);
@@ -262,20 +249,16 @@ void ser_write_rsp(u8 pdu_type/*reserved*/, u8 attOpcode/*reserved*/,
 #endif
     moduleOutData(attValue, valueLen_w);
 #endif
-
   case 0x12://cmd
   case 0x13://cfg
     ser_write_rsp_pkt(pdu_type);  /*if the related character has the property of WRITE(with response) or TYPE_CFG, one MUST invoke this func*/
     break;
-
   default:
     att_notFd(pdu_type, attOpcode, att_hd);    /*the default response, also for the purpose of error robust */
     break;
-
   }
 }
 
-///STEP2.1:Queued Writes data if any
 /********************************************************************************************************
 **function: ser_prepare_write
 **@brief    This function calls the function for sending long data to the phone
@@ -292,9 +275,7 @@ void ser_write_rsp(u8 pdu_type/*reserved*/, u8 attOpcode/*reserved*/,
 ********************************************************************************************************/
 void ser_prepare_write(u16 handle, u8 *attValue, u16 attValueLen, u16 att_offset)//user's call back api
 {
-  //queued data:offset + data(size)
-  //when ser_execute_write() is invoked, means end of queue write.
-  //to do
+
 }
 
 /********************************************************************************************************
@@ -307,10 +288,10 @@ void ser_prepare_write(u16 handle, u8 *attValue, u16 attValueLen, u16 att_offset
 ********************************************************************************************************/
 void ser_execute_write(void)//user's call back api
 {
-  //end of queued writes
-  //to do...
+
 }
 
+///STEP3:Read data
 //// read response
 /********************************************************************************************************
 **function: server_rd_rsp
@@ -331,8 +312,9 @@ void server_rd_rsp(u8 attOpcode, u16 attHandle, u8 pdu_type)
   u8 tab[3];
   switch (attHandle) //hard code
   {
-  case 0x04:
-    att_server_rd(pdu_type, attOpcode, attHandle, "MINDMOTION", 10); //读相对手机而言
+  case 0x04: //MANU_INFO
+    //att_server_rd( pdu_type, attOpcode, attHandle, (u8*)(MANU_INFO), sizeof(MANU_INFO)-1);
+    att_server_rd(pdu_type, attOpcode, attHandle, "MINDMOTION", 10); //ble lib build version
     break;
   case 0x09: //MANU_INFO
     //att_server_rd( pdu_type, attOpcode, attHandle, (u8*)(MANU_INFO), sizeof(MANU_INFO)-1);
@@ -369,6 +351,25 @@ void server_rd_rsp(u8 attOpcode, u16 attHandle, u8 pdu_type)
   }
 }
 
+/********************************************************************************************************
+**function: server_blob_rd_rsp
+**@brief    This function is called when the phone reads long characters
+**
+**@param    attOpcode   :   corresponding value of attOpcode operation
+**
+**@param    attHandle   :   BLE service handle value
+**
+**@param    dataHdrP    :
+**
+**@param    offset      :   Address offset
+**
+**@return
+********************************************************************************************************/
+void server_blob_rd_rsp(u8 attOpcode, u16 attHandle, u8 dataHdrP, u16 offset)
+{
+
+}
+
 //return 1 means found
 /********************************************************************************************************
 **function: GetPrimaryServiceHandle
@@ -390,13 +391,6 @@ int GetPrimaryServiceHandle(unsigned short hd_start, unsigned short hd_end,
                             unsigned short uuid16,
                             unsigned short *hd_start_r, unsigned short *hd_end_r)
 {
-// example
-//    if((uuid16 == 0x1812) && (hd_start <= 0x19))// MUST keep match with the information save in function  att_server_rdByGrType(...)
-//    {
-//        *hd_start_r = 0x19;
-//        *hd_end_r = 0x2a;
-//        return 1;
-//    }
   return 0;
 }
 
@@ -410,8 +404,7 @@ int GetPrimaryServiceHandle(unsigned short hd_start, unsigned short hd_end,
 ********************************************************************************************************/
 void gatt_user_send_notify_data_callback(void)
 {
-  //to do if any ...
-  //add user sending data notify operation ....
+
 }
 
 /********************************************************************************************************
@@ -440,24 +433,16 @@ char GetConnectedStatus(void)
 {
   return gConnectedFlag;
 }
-
-/********************************************************************************************************
-**function: server_blob_rd_rsp
-**@brief    This function is called when the phone reads long characters
-**
-**@param    attOpcode   :   corresponding value of attOpcode operation
-**
-**@param    attHandle   :   BLE service handle value
-**
-**@param    dataHdrP    :
-**
-**@param    offset      :   Address offset
-**
-**@return
-********************************************************************************************************/
-void server_blob_rd_rsp(u8 attOpcode, u16 attHandle, u8 dataHdrP, u16 offset)
+void LED_ONOFF(unsigned char onFlag)//module indicator,GPA8
 {
-  att_notFd(dataHdrP, attOpcode, attHandle); /*the default response, also for the purpose of error robust */
+  if (onFlag)
+  {
+    GPIOB->BRR = GPIO_Pin_9;  //low, on
+  }
+  else
+  {
+    GPIOB->BSRR = GPIO_Pin_9; //high, off
+  }
 }
 
 /********************************************************************************************************
@@ -470,6 +455,8 @@ void server_blob_rd_rsp(u8 attOpcode, u16 attHandle, u8 dataHdrP, u16 offset)
 ********************************************************************************************************/
 void ConnectStausUpdate(unsigned char IsConnectedFlag) //porting api
 {
+  //[IsConnectedFlag] indicates the connection status
+  LED_ONOFF(IsConnectedFlag);
   if (IsConnectedFlag != gConnectedFlag)
   {
     gConnectedFlag = IsConnectedFlag;
@@ -484,14 +471,12 @@ void ConnectStausUpdate(unsigned char IsConnectedFlag) //porting api
       moduleOutData((u8 *)"IND:DISCONNECT\n", 15);
     }
 #else
-    if (gConnectedFlag)
-    {
-      SleepStop = 1;
-    }
-    else
-    {
-      SleepStop = 2;
-    }
+//        if(gConnectedFlag){
+//            SleepStop = 1;
+//        }
+//        else{
+//            SleepStop = 2;
+//        }
 #endif
 #endif
   }
