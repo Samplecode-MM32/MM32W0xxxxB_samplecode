@@ -20,5 +20,9 @@ The procedure works for MM32W073NTB/MM32W073PFB
 ### 2020.07.07
 
 1.	Add FT value
-
 2.	change SV3.5.9 --> SV3.6.0
+
+### 2020.09.29
+
+1. Add  OTA  demo
+
