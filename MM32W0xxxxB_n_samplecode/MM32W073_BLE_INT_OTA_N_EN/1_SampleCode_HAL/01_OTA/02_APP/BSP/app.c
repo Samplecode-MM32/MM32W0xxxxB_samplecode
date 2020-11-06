@@ -72,7 +72,7 @@ void CodeNvcRemap(void);
 #define TYPE_INC       0x2802
 #define UUID16_FORMAT  0xff
 int CHANGE_DEVINCEINFO = 0;
-#define SOFTWARE_INFO "SV3.6.0.0"
+#define SOFTWARE_INFO "SV3.6.1.0"
 #define MANU_INFO     "MindMotion Bluetooth"
 char DeviceInfo[24] =  "MindMotion";  /*max len is 24 bytes*/
 

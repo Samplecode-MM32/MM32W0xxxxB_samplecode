@@ -573,6 +573,21 @@ FLASH_Status FLASH_EnableWriteProtection(uint32_t FLASH_Pages)
     return status;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+void FLASH_OPTB_Enable(void)
+{
+    FLASH->OPTKEYR = FLASH_KEY1;
+    FLASH->OPTKEYR = FLASH_KEY2;
+}
+
+
+FLASH_Status FLASH_ProgramOptionHalfWord(u32 address, u16 data)
+{
+    FLASH_OPTB_Enable();
+    FLASH->CR |= FLASH_CR_OPTPG;
+    *(u16*)address = data;
+    return FLASH_WaitForLastOperation(ProgramTimeout);
+}
 /**
 * @brief  Enables or disables the read out protection.
 *   If the user has already programmed the other option bytes before

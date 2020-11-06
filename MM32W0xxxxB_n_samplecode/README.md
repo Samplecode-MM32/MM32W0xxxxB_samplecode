@@ -26,3 +26,9 @@ The procedure works for MM32W073NTB/MM32W073PFB
 
 1. Add  OTA  demo
 
+### 2020.11.06
+
+​	1.OTA projects add  read   protection
+
+​	2.change SV3.6.0 --> SV3.6.1
+

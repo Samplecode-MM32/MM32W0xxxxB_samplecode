@@ -271,6 +271,7 @@ void FLASH_HalfCycleAccessCmd(uint32_t FLASH_HalfCycleAccess);
 void FLASH_PrefetchBufferCmd(uint32_t FLASH_PrefetchBuffer);
 void FLASH_Unlock(void);
 void FLASH_Lock(void);
+FLASH_Status FLASH_ProgramOptionHalfWord(u32 address, u16 data);
 FLASH_Status FLASH_ErasePage(uint32_t Page_Address);
 FLASH_Status FLASH_EraseAllPages(void);
 FLASH_Status FLASH_EraseOptionBytes(void);

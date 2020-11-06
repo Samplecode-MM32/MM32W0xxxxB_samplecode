@@ -158,7 +158,20 @@ void FLASH_HalfCycleAccessCmd(uint32_t FLASH_HalfCycleAccess)
     FLASH->ACR &= ACR_HLFCYA_Mask;
     FLASH->ACR |= FLASH_HalfCycleAccess;
 }
+void FLASH_OPTB_Enable(void)
+{
+    FLASH->OPTKEYR = FLASH_KEY1;
+    FLASH->OPTKEYR = FLASH_KEY2;
+}
 
+
+FLASH_Status FLASH_ProgramOptionHalfWord(u32 address, u16 data)
+{
+    FLASH_OPTB_Enable();
+    FLASH->CR |= FLASH_CR_OPTPG;
+    *(u16*)address = data;
+    return FLASH_WaitForLastOperation(ProgramTimeout);
+}
 /**
 * @brief  Enables or disables the Prefetch Buffer.
 * @param FLASH_PrefetchBuffer: specifies the Prefetch buffer status.

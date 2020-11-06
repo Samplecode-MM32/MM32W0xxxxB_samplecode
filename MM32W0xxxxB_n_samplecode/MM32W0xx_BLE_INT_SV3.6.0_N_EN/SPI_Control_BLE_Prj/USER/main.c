@@ -22,6 +22,7 @@ unsigned char *get_local_addr(void) //used for ble pairing case
 
 void TIM3_PWM_Init(u16 arr, u16 psc);
 extern void  get_DEVINCEINFO(void);
+
 int main(void)
 {
   unsigned long temp = 0x800000;
@@ -57,6 +58,7 @@ int main(void)
 		}
 	
   ble_run_interrupt_start(160 * 2); //320*0.625=200 ms
+    FLASH_ReadProtect();
   while (1)
   {
     /*************do sometging and sleep****************/
