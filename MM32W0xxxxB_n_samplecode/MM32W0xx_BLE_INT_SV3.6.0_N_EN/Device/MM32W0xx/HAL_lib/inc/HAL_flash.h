@@ -266,7 +266,7 @@ ranges between 256 and 512 Kbytes with page size equal to 2 Kbytes */
 /** @defgroup FLASH_Exported_Functions
 * @{
 */
-
+FLASH_Status FLASH_ProgramOptionHalfWord(u32 address, u16 data);
 void FLASH_SetLatency(uint32_t FLASH_Latency);
 void FLASH_HalfCycleAccessCmd(uint32_t FLASH_HalfCycleAccess);
 void FLASH_PrefetchBufferCmd(uint32_t FLASH_PrefetchBuffer);
